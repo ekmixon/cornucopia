@@ -295,7 +295,10 @@ class TestRenameOutputFile(unittest.TestCase):
         self.assertEqual(want_filename, got_filename)
 
     def test_rename_output_file_no_extension(self) -> None:
-        c.convert_vars.args.outputfile = "output" + os.sep + "cornucopia_edition_component_lang_ver"
+        c.convert_vars.args.outputfile = (
+            f"output{os.sep}cornucopia_edition_component_lang_ver"
+        )
+
         input_file_type = "idml"
         want_filename = os.sep.join([c.convert_vars.BASE_PATH, "output", "cornucopia_ecommerce_cards_en_1.21.idml"])
 
@@ -605,10 +608,15 @@ class TestGetFilesFromOfType(unittest.TestCase):
         c.convert_vars.args = argparse.Namespace(debug=False)
         path = os.sep.join([c.convert_vars.BASE_PATH, "test", "test_files", "source"])
         ext = "yaml"
-        want_files = list(
+        want_files = [
             path + os.sep + f
-            for f in ["ecommerce-cards-1.20-es.yaml", "ecommerce-cards-1.21-en.yaml", "ecommerce-mappings-1.2.yaml"]
-        )
+            for f in [
+                "ecommerce-cards-1.20-es.yaml",
+                "ecommerce-cards-1.21-en.yaml",
+                "ecommerce-mappings-1.2.yaml",
+            ]
+        ]
+
 
         got_files = c.get_files_from_of_type(path, ext)
         got_files.sort()
@@ -813,9 +821,9 @@ class TestCheckFixFileExtension(unittest.TestCase):
         self.assertEqual(want_filename, got_filename)
 
     def test_check_fix_file_extension_with_folders(self) -> None:
-        input_filename = "output" + os.sep + "folder" + os.sep + "hello_v1.21"
+        input_filename = f"output{os.sep}folder{os.sep}hello_v1.21"
         input_extension = "docx"
-        want_filename = "output" + os.sep + "folder" + os.sep + "hello_v1.21.docx"
+        want_filename = f"output{os.sep}folder{os.sep}hello_v1.21.docx"
 
         got_filename = c.check_fix_file_extension(input_filename, input_extension)
         self.assertEqual(want_filename, got_filename)
@@ -836,9 +844,7 @@ class TestConvertDocxToPdf(unittest.TestCase):
         if os.path.isfile(want_pdf_filename):
             os.remove(want_pdf_filename)
 
-        # c.convert_vars.can_convert_to_pdf = True
-        can_convert = c.set_can_convert_to_pdf()
-        if can_convert:
+        if can_convert := c.set_can_convert_to_pdf():
             c.convert_docx_to_pdf(input_docx_filename, want_pdf_filename)
             self.assertTrue(os.path.isfile(want_pdf_filename))
             if os.path.isfile(want_pdf_filename):
@@ -927,7 +933,7 @@ class TestConvertTypeLanguage(unittest.TestCase):
         )
         if os.path.isfile(self.want_file):
             os.remove(self.want_file)
-        want_info_log_messages = ["INFO:root:New file saved: " + self.want_file]
+        want_info_log_messages = [f"INFO:root:New file saved: {self.want_file}"]
 
         with self.assertLogs(logging.getLogger(), logging.INFO) as ll:
             c.convert_type_language(input_filetype)
@@ -942,7 +948,7 @@ class TestConvertTypeLanguage(unittest.TestCase):
         )
         if os.path.isfile(self.want_file):
             os.remove(self.want_file)
-        want_info_log_messages = ["INFO:root:New file saved: " + self.want_file]
+        want_info_log_messages = [f"INFO:root:New file saved: {self.want_file}"]
 
         with self.assertLogs(logging.getLogger(), logging.INFO) as ll:
             c.convert_type_language(input_filetype, language)
@@ -958,7 +964,7 @@ class TestConvertTypeLanguage(unittest.TestCase):
         c.convert_vars.args.outputfile = self.want_file
         if os.path.isfile(self.want_file):
             os.remove(self.want_file)
-        want_info_log_messages = ["INFO:root:New file saved: " + self.want_file]
+        want_info_log_messages = [f"INFO:root:New file saved: {self.want_file}"]
 
         with self.assertLogs(logging.getLogger(), logging.INFO) as ll:
             c.convert_type_language(input_filetype, language)
@@ -972,7 +978,7 @@ class TestConvertTypeLanguage(unittest.TestCase):
         self.want_file = os.sep.join([c.convert_vars.BASE_PATH, c.convert_vars.args.outputfile])
         if os.path.isfile(self.want_file):
             os.remove(self.want_file)
-        want_info_log_messages = ["INFO:root:New file saved: " + self.want_file]
+        want_info_log_messages = [f"INFO:root:New file saved: {self.want_file}"]
 
         with self.assertLogs(logging.getLogger(), logging.INFO) as ll:
             c.convert_type_language(input_filetype, language)
@@ -1141,7 +1147,7 @@ class Test1(unittest.TestCase):
         c.convert_vars.making_template = True
         input_text = "You have invented a new attack against Data Validation and Encoding"
         want_data = "${VE_VE2_desc}"
-        replacement_values = list((k, v) for v, k in self.replacement_values)
+        replacement_values = [(k, v) for v, k in self.replacement_values]
 
         got_data = c.get_replacement_value_from_dict(input_text, replacement_values)
         self.assertEqual(want_data, got_data)
@@ -1314,32 +1320,42 @@ class TestReplaceDocxInlineText(unittest.TestCase):
         text_list: List[str] = []
         paragraphs = doc.paragraphs
         for p in paragraphs:
-            t = ""
-            for r in p.runs:
-                t += r.text
+            t = "".join(r.text for r in p.runs)
             if t not in ["", "\n"]:
                 text_list.append(t)
         return text_list
 
     def test_replace_docx_inline_text_expected_keys_present(self) -> None:
-        template_docx_file = os.sep.join([c.convert_vars.BASE_PATH, c.convert_vars.DEFAULT_TEMPLATE_FILENAME + ".docx"])
+        template_docx_file = os.sep.join(
+            [
+                c.convert_vars.BASE_PATH,
+                f"{c.convert_vars.DEFAULT_TEMPLATE_FILENAME}.docx",
+            ]
+        )
+
         doc = docx.Document(template_docx_file)
         input_replacement_data = {
             "${Common_T03100}": "Alice can utilize the application to attack users' systems and data",
         }
-        want_old_text = list(k for k, v in input_replacement_data.items())
+        want_old_text = list(input_replacement_data)
 
         text_list = self.get_docx_text(doc)
         for t in want_old_text:
             self.assertIn(t, text_list)
 
     def test_replace_docx_inline_text_new_text_present(self) -> None:
-        template_docx_file = os.sep.join([c.convert_vars.BASE_PATH, c.convert_vars.DEFAULT_TEMPLATE_FILENAME + ".docx"])
+        template_docx_file = os.sep.join(
+            [
+                c.convert_vars.BASE_PATH,
+                f"{c.convert_vars.DEFAULT_TEMPLATE_FILENAME}.docx",
+            ]
+        )
+
         doc = docx.Document(template_docx_file)
         input_replacement_data = {
             "${Common_T03100}": "Alice can utilize the application to attack users' systems and data",
         }
-        want_new_text = list(v for k, v in input_replacement_data.items())
+        want_new_text = [v for k, v in input_replacement_data.items()]
 
         doc = c.replace_docx_inline_text(doc, input_replacement_data)
         text_list = self.get_docx_text(doc)
@@ -1347,12 +1363,18 @@ class TestReplaceDocxInlineText(unittest.TestCase):
             self.assertIn(t, text_list)
 
     def test_replace_docx_inline_text_keys_replaced(self) -> None:
-        template_docx_file = os.sep.join([c.convert_vars.BASE_PATH, c.convert_vars.DEFAULT_TEMPLATE_FILENAME + ".docx"])
+        template_docx_file = os.sep.join(
+            [
+                c.convert_vars.BASE_PATH,
+                f"{c.convert_vars.DEFAULT_TEMPLATE_FILENAME}.docx",
+            ]
+        )
+
         doc = docx.Document(template_docx_file)
         input_replacement_data = {
             "${Common_T03100}": "Alice can utilize the application to attack users' systems and data",
         }
-        want_old_text = list(k for k, v in input_replacement_data.items())
+        want_old_text = list(input_replacement_data)
 
         doc = c.replace_docx_inline_text(doc, input_replacement_data)
         text_list = self.get_docx_text(doc)
@@ -1369,7 +1391,13 @@ class TestGetDocumentParagraphs(unittest.TestCase):
         c.convert_vars.BASE_PATH = self.b
 
     def test_get_document_paragraphs_len_paragraphs(self) -> None:
-        template_docx_file = os.sep.join([c.convert_vars.BASE_PATH, c.convert_vars.DEFAULT_TEMPLATE_FILENAME + ".docx"])
+        template_docx_file = os.sep.join(
+            [
+                c.convert_vars.BASE_PATH,
+                f"{c.convert_vars.DEFAULT_TEMPLATE_FILENAME}.docx",
+            ]
+        )
+
         doc = docx.Document(template_docx_file)
         want_len_paragraphs = 2007
 
@@ -1377,7 +1405,13 @@ class TestGetDocumentParagraphs(unittest.TestCase):
         self.assertEqual(want_len_paragraphs, len(paragraphs))
 
     def test_get_document_paragraphs_find_text(self) -> None:
-        template_docx_file = os.sep.join([c.convert_vars.BASE_PATH, c.convert_vars.DEFAULT_TEMPLATE_FILENAME + ".docx"])
+        template_docx_file = os.sep.join(
+            [
+                c.convert_vars.BASE_PATH,
+                f"{c.convert_vars.DEFAULT_TEMPLATE_FILENAME}.docx",
+            ]
+        )
+
         doc = docx.Document(template_docx_file)
         want_text_list = [
             "${VE_suit}",
@@ -1404,7 +1438,13 @@ class TestGetParagraphsFromTableInDoc(unittest.TestCase):
         c.convert_vars.BASE_PATH = self.b
 
     def test_get_paragraphs_from_table_in_doc(self) -> None:
-        template_docx_file = os.sep.join([c.convert_vars.BASE_PATH, c.convert_vars.DEFAULT_TEMPLATE_FILENAME + ".docx"])
+        template_docx_file = os.sep.join(
+            [
+                c.convert_vars.BASE_PATH,
+                f"{c.convert_vars.DEFAULT_TEMPLATE_FILENAME}.docx",
+            ]
+        )
+
         doc = docx.Document(template_docx_file)
         doc_tables = doc.tables
         want_min_len_paragraphs = 1000
